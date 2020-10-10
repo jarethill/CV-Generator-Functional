@@ -94,7 +94,7 @@ const Experience = ({ updateInformation }) => {
                             key={index}
                             company={companies[index]}
                             companyIndex={index}
-                            modifyCompany={modifyCompanies}
+                            modifyCompanies={modifyCompanies}
                             numberOfCompanies={numberOfCompanies}
                         />
                     );
@@ -105,7 +105,7 @@ const Experience = ({ updateInformation }) => {
                         <ExperienceForm
                             company={companies[index]}
                             companyIndex={index}
-                            modifyCompany={modifyCompanies}
+                            modifyCompanies={modifyCompanies}
                             numberOfCompanies={numberOfCompanies}
                         />
                         <div className='divider mt-4'></div>
