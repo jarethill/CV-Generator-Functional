@@ -1,97 +1,119 @@
-import React, { Component } from 'react';
+import React, { useReducer, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import ExperienceForm from './ExperienceForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-class Experience extends Component {
-    constructor(props) {
-        super(props);
+const plusCircleStyle = { fontSize: '1.25rem', marginBottom: '.18em', cursor: 'pointer' };
 
-        this.modifyCompany = this.modifyCompany.bind(this);
+const DEFAULT_COMPANY = {
+    companyName: '',
+    positionTitle: '',
+    jobTasks: [''],
+    dateFrom: '',
+    dateTo: '',
+};
+
+function containsUndefined(...args) {
+    for (let i = 0; i < args.length; i++) {
+        if (typeof args[i] === 'undefined') return true;
     }
 
-    modifyCompany(companiesArray, method = 'add', companyIndex = null) {
-        const updatedCompanies = [...companiesArray];
-        const { updateState, rootName } = this.props;
+    return false;
+}
 
-        if (method === 'add') {
-            // Return an object with all the company fields set to an empty string or array for job tasks
-            const emptyCompany = Object.keys(updatedCompanies[0]).reduce((accum, current) => {
-                if (Array.isArray(updatedCompanies[0][current])) {
-                    return {
-                        ...accum,
-                        [current]: [''],
-                    };
-                } else {
-                    return {
-                        ...accum,
-                        [current]: '',
-                    };
-                }
-            }, {});
+function companyReducer(state, action) {
+    const { type, companyIndex, jobIndex, name, value } = action;
 
-            updatedCompanies.push(emptyCompany);
-        } else if (method === 'remove' && companiesArray.length > 1 && companyIndex >= 0) {
-            updatedCompanies.splice(companyIndex, 1);
-        } else {
-            return;
-        }
+    const updatedState = state.map((obj, index) => ({ ...obj, jobTasks: [...state[index].jobTasks] }));
 
-        updateState(rootName, {
-            companies: updatedCompanies,
-        });
-    }
+    switch (type) {
+        case 'addCompany':
+            updatedState.push({ ...DEFAULT_COMPANY });
 
-    render() {
-        const { companies } = this.props.info;
-        const numberOfCompanies = companies.length;
+            return updatedState;
+        case 'removeCompany':
+            if (containsUndefined(companyIndex)) return state;
 
-        const { updateState, rootName } = this.props;
-        const plusCircleStyle = { fontSize: '1.25rem', marginBottom: '.18em', cursor: 'pointer' };
+            updatedState.splice(companyIndex, 1);
 
-        return (
-            <Container id='experience' className='mt-5' as='section' style={{ maxWidth: '650px' }}>
-                <h2 className='text-center'>
-                    Experience{' '}
-                    <FontAwesomeIcon
-                        icon={faPlusCircle}
-                        style={plusCircleStyle}
-                        onMouseDown={() => this.modifyCompany(companies, 'add')}
-                    />
-                </h2>
+            return updatedState;
+        case 'editCompany':
+            if (containsUndefined(companyIndex, name, value)) return state;
 
-                {companies.map((company, index) => {
-                    if (index === numberOfCompanies - 1) {
-                        // If this is the last company, no divider is added below
-                        return (
-                            <ExperienceForm
-                                key={index}
-                                companies={companies}
-                                companyIndex={index}
-                                updateState={updateState}
-                                modifyCompany={this.modifyCompany}
-                                rootName={rootName}
-                            />
-                        );
-                    }
+            updatedState[companyIndex][name] = value;
 
-                    return (
-                        <React.Fragment key={index}>
-                            <ExperienceForm
-                                companies={companies}
-                                companyIndex={index}
-                                updateState={updateState}
-                                modifyCompany={this.modifyCompany}
-                                rootName={rootName}
-                            />
-                            <div className='divider mt-4'></div>
-                        </React.Fragment>
-                    );
-                })}
-            </Container>
-        );
+            return updatedState;
+        case 'addTask':
+            if (containsUndefined(companyIndex)) return state;
+
+            updatedState[companyIndex].jobTasks.push('');
+
+            return updatedState;
+        case 'removeTask':
+            if (containsUndefined(companyIndex, jobIndex)) return state;
+
+            updatedState[companyIndex].jobTasks.splice(jobIndex, 1);
+
+            return updatedState;
+        case 'editTask':
+            if (containsUndefined(companyIndex, jobIndex, value)) return state;
+
+            updatedState[companyIndex].jobTasks[jobIndex] = value;
+
+            return updatedState;
+        default:
+            throw new Error('Type must be included.');
     }
 }
+
+const Experience = ({ updateInformation }) => {
+    const [companies, modifyCompanies] = useReducer(companyReducer, [{ ...DEFAULT_COMPANY }]);
+    const numberOfCompanies = companies.length;
+
+    useEffect(() => {
+        updateInformation('Experience', companies);
+    }, [companies, updateInformation]);
+
+    return (
+        <Container id='experience' className='mt-5' as='section' style={{ maxWidth: '650px' }}>
+            <h2 className='text-center'>
+                Experience{' '}
+                <FontAwesomeIcon
+                    icon={faPlusCircle}
+                    style={plusCircleStyle}
+                    onMouseDown={() => modifyCompanies({ type: 'addCompany' })}
+                />
+            </h2>
+
+            {companies.map((company, index) => {
+                if (index === numberOfCompanies - 1) {
+                    // If this is the last company, return form without a divider below it
+                    return (
+                        <ExperienceForm
+                            key={index}
+                            company={companies[index]}
+                            companyIndex={index}
+                            modifyCompany={modifyCompanies}
+                            numberOfCompanies={numberOfCompanies}
+                        />
+                    );
+                }
+
+                return (
+                    <React.Fragment key={index}>
+                        <ExperienceForm
+                            company={companies[index]}
+                            companyIndex={index}
+                            modifyCompany={modifyCompanies}
+                            numberOfCompanies={numberOfCompanies}
+                        />
+                        <div className='divider mt-4'></div>
+                    </React.Fragment>
+                );
+            })}
+        </Container>
+    );
+};
 
 export default Experience;

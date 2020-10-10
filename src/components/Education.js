@@ -1,90 +1,83 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import EducationForm from './EducationForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-class Education extends Component {
-    constructor(props) {
-        super(props);
+const DEFAULT_SCHOOL = {
+    schoolName: '',
+    schoolTitle: '',
+    dateFrom: '',
+    dateTo: '',
+};
 
-        this.modifySchool = this.modifySchool.bind(this);
-    }
-    modifySchool(schoolsArray, method = 'add', schoolIndex = null) {
-        const { updateState, rootName } = this.props;
-        const updatedSchools = [...schoolsArray];
+const plusCircleStyle = { fontSize: '1.25rem', marginBottom: '.18em', cursor: 'pointer' };
 
-        if (method === 'add') {
-            // Return an object with all the school fields set to an empty string
-            const emptySchool = Object.keys(updatedSchools[0]).reduce((accum, current) => {
-                return {
-                    ...accum,
-                    [current]: '',
-                };
-            }, {});
+const Education = ({ updateInformation }) => {
+    const [schools, setSchools] = useState([{ ...DEFAULT_SCHOOL }]);
+    const numberOfSchools = schools.length;
 
-            updatedSchools.push(emptySchool);
-        } else if (method === 'remove' && updatedSchools.length > 1 && schoolIndex >= 0) {
-            updatedSchools.splice(schoolIndex, 1);
-        } else {
-            return;
-        }
+    function modifySchool(schoolIndex, propertyName, value) {
+        const updatedSchools = schools.map((school) => ({ ...school }));
 
-        updateState(rootName, {
-            schools: updatedSchools,
-        });
+        updatedSchools[schoolIndex][propertyName] = value;
+
+        setSchools(updatedSchools);
     }
 
-    render() {
-        const { schools } = this.props.info;
-        const numberOfSchools = schools.length;
+    function deleteSchool(schoolIndex) {
+        const updatedSchools = schools.map((school) => ({ ...school }));
 
-        const { updateState, rootName } = this.props;
+        updatedSchools.splice(schoolIndex, 1);
 
-        const plusCircleStyle = { fontSize: '1.25rem', marginBottom: '.18em', cursor: 'pointer' };
+        setSchools(updatedSchools);
+    }
 
-        return (
-            <Container id='education' className='mt-5' as='section' style={{ maxWidth: '650px' }}>
-                <h2 className='text-center'>
-                    Education{' '}
-                    <FontAwesomeIcon
-                        icon={faPlusCircle}
-                        style={plusCircleStyle}
-                        onMouseDown={() => this.modifySchool(schools, 'add')}
-                    />
-                </h2>
+    useEffect(() => {
+        updateInformation('Education', schools);
+    }, [schools, updateInformation]);
 
-                {schools.map((school, index) => {
-                    if (index === numberOfSchools - 1) {
-                        // If this is the last school, no divider is added below
-                        return (
-                            <EducationForm
-                                key={index}
-                                schools={schools}
-                                schoolIndex={index}
-                                updateState={updateState}
-                                modifySchool={this.modifySchool}
-                                rootName={rootName}
-                            />
-                        );
-                    }
+    return (
+        <Container id='education' className='mt-5' as='section' style={{ maxWidth: '650px' }}>
+            <h2 className='text-center'>
+                Education{' '}
+                <FontAwesomeIcon
+                    icon={faPlusCircle}
+                    style={plusCircleStyle}
+                    onMouseDown={() => setSchools([...schools, { ...DEFAULT_SCHOOL }])}
+                />
+            </h2>
 
+            {schools.map((school, index) => {
+                if (index === numberOfSchools - 1) {
+                    // If this is the last school, no divider is added below
                     return (
-                        <React.Fragment key={index}>
-                            <EducationForm
-                                schools={schools}
-                                schoolIndex={index}
-                                updateState={updateState}
-                                modifySchool={this.modifySchool}
-                                rootName={rootName}
-                            />
-                            <div className='divider mt-4'></div>
-                        </React.Fragment>
+                        <EducationForm
+                            key={index}
+                            school={schools[index]}
+                            schoolIndex={index}
+                            modifySchool={modifySchool}
+                            deleteSchool={deleteSchool}
+                            numberOfSchools={numberOfSchools}
+                        />
                     );
-                })}
-            </Container>
-        );
-    }
-}
+                }
+
+                return (
+                    <React.Fragment key={index}>
+                        <EducationForm
+                            school={schools[index]}
+                            schoolIndex={index}
+                            modifySchool={modifySchool}
+                            deleteSchool={deleteSchool}
+                            numberOfSchools={numberOfSchools}
+                        />
+                        <div className='divider mt-4'></div>
+                    </React.Fragment>
+                );
+            })}
+        </Container>
+    );
+};
 
 export default Education;

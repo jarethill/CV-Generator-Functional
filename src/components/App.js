@@ -1,68 +1,46 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import Header from './Header';
 import GeneralInformation from './GeneralInformation';
 import Education from './Education';
 import Experience from './Experience';
+import isEqual from 'lodash.isequal';
 import '../styles/App.scss';
 import 'bootswatch/dist/flatly/bootstrap.min.css';
 
-class App extends Component {
-    constructor() {
-        super();
+const App = () => {
+    const [generalInformation, setGeneralInformation] = useState({});
+    // eslint-disable-next-line
+    const [education, setEducation] = useState([]);
+    // eslint-disable-next-line
+    const [experience, setExperience] = useState([]);
 
-        this.updateState = this.updateState.bind(this);
-
-        this.state = {
-            general: {
-                firstName: '',
-                lastName: '',
-                addressOne: '',
-                addressTwo: '',
-                city: '',
-                state: '',
-                zip: '',
-            },
-            education: {
-                schools: [
-                    {
-                        schoolName: '',
-                        schoolTitle: '',
-                        dateFrom: '',
-                        dateTo: '',
-                    },
-                ],
-            },
-            experience: {
-                companies: [
-                    {
-                        companyName: '',
-                        positionTitle: '',
-                        jobTasks: [''],
-                        dateFrom: '',
-                        dateTo: '',
-                    },
-                ],
-            },
-        };
+    // Used to store passed components information into this component, needed here for when back end is implemented
+    // and all components data will be sent to the server
+    function updateInformation(component, data) {
+        switch (component) {
+            case 'GeneralInformation':
+                if (!isEqual(generalInformation, data)) {
+                    setGeneralInformation(data);
+                }
+                break;
+            case 'Education':
+                setEducation(data);
+                break;
+            case 'Experience':
+                setExperience(data);
+                break;
+            default:
+        }
     }
 
-    updateState(property, data) {
-        this.setState({
-            [property]: data,
-        });
-    }
-    render() {
-        const { general, education, experience } = this.state;
-
-        return (
-            <section id='app'>
-                <Header />
-                <GeneralInformation updateState={this.updateState} info={general} rootName='general' />
-                <Education updateState={this.updateState} info={education} rootName='education' />
-                <Experience updateState={this.updateState} info={experience} rootName='experience' />
-            </section>
-        );
-    }
-}
+    return (
+        <section id='app'>
+            <Header />
+            <GeneralInformation updateInformation={updateInformation} />
+            <Education updateInformation={updateInformation} />
+            <Experience updateInformation={updateInformation} />
+        </section>
+    );
+};
 
 export default App;

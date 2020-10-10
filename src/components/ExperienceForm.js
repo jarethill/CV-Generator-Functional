@@ -1,220 +1,189 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle, faMinusCircle } from '@fortawesome/free-solid-svg-icons';
 
-class ExperienceForm extends Component {
-    constructor(props) {
-        super(props);
+const minusCircleStyle = { cursor: 'pointer', position: 'absolute', right: '.75em', top: '.75em' };
 
-        this.updateCompany = this.updateCompany.bind(this);
-        this.modifyTask = this.modifyTask.bind(this);
-        this.toggleEditMode = this.toggleEditMode.bind(this);
+const ExperienceForm = ({ company, companyIndex, modifyCompanies, numberOfCompanies }) => {
+    const [editMode, setEditMode] = useState(true);
+    const { companyName, positionTitle, jobTasks, dateFrom, dateTo } = company;
 
-        this.state = {
-            editMode: true,
-        };
-    }
+    return (
+        <Form className='mt-4 mb-4' onSubmit={(e) => e.preventDefault()}>
+            <Form.Group controlId='formBasicCompany'>
+                <Form.Label className='font-weight-bold'>Company Name</Form.Label>
 
-    updateCompany(companiesArray, companyIndex, propertyName, value) {
-        const updatedCompanies = [...companiesArray];
-        const { updateState, rootName } = this.props;
+                {editMode ? (
+                    <Form.Control
+                        type='text'
+                        placeholder='Enter company name'
+                        value={companyName}
+                        name='companyName'
+                        onChange={(e) =>
+                            modifyCompanies({
+                                type: 'editCompany',
+                                companyIndex,
+                                name: e.target.name,
+                                value: e.target.value,
+                            })
+                        }
+                    />
+                ) : (
+                    <p>{companyName}</p>
+                )}
+            </Form.Group>
 
-        updatedCompanies[companyIndex] = {
-            ...updatedCompanies[companyIndex],
-            [propertyName]: value,
-        };
+            <Form.Group controlId='formBasicPositionTitle'>
+                <Form.Label className='font-weight-bold'>Position Title</Form.Label>
 
-        updateState(rootName, {
-            companies: updatedCompanies,
-        });
-    }
+                {editMode ? (
+                    <Form.Control
+                        type='text'
+                        placeholder='Enter title'
+                        value={positionTitle}
+                        name='positionTitle'
+                        onChange={(e) =>
+                            modifyCompanies({
+                                type: 'editCompany',
+                                companyIndex,
+                                name: e.target.name,
+                                value: e.target.value,
+                            })
+                        }
+                    />
+                ) : (
+                    <p>{positionTitle}</p>
+                )}
+            </Form.Group>
 
-    updateCompanyTasks(companiesArray, companyIndex, taskIndex, value) {
-        const updatedCompanies = [...companiesArray];
-        const updatedTasks = [...updatedCompanies[companyIndex].jobTasks];
-        const { updateState, rootName } = this.props;
-
-        updatedTasks[taskIndex] = value;
-
-        updatedCompanies[companyIndex] = {
-            ...updatedCompanies[companyIndex],
-            jobTasks: updatedTasks,
-        };
-
-        updateState(rootName, {
-            companies: updatedCompanies,
-        });
-    }
-
-    modifyTask(companiesArray, companyIndex, method = 'add', taskIndex = null) {
-        const updatedCompanies = [...companiesArray];
-        const updatedTasks = [...updatedCompanies[companyIndex].jobTasks];
-        const { updateState, rootName } = this.props;
-
-        if (method === 'add') {
-            updatedTasks.push('');
-        } else if (method === 'remove' && updatedTasks.length > 1 && taskIndex >= 0) {
-            updatedTasks.splice(taskIndex, 1);
-        } else {
-            return;
-        }
-
-        updatedCompanies[companyIndex] = {
-            ...updatedCompanies[companyIndex],
-            jobTasks: updatedTasks,
-        };
-
-        updateState(rootName, {
-            companies: updatedCompanies,
-        });
-    }
-
-    toggleEditMode() {
-        this.setState((prevState) => ({
-            editMode: !prevState.editMode,
-        }));
-    }
-
-    render() {
-        const { editMode } = this.state;
-        const { companies, companyIndex, modifyCompany } = this.props;
-        const { companyName, positionTitle, jobTasks, dateFrom, dateTo } = companies[companyIndex];
-
-        const minusCircleStyle = { cursor: 'pointer', position: 'absolute', right: '.75em', top: '.75em' };
-
-        return (
-            <Form className='mt-4 mb-4' onSubmit={(e) => e.preventDefault()}>
-                <Form.Group controlId='formBasicCompany'>
-                    <Form.Label className='font-weight-bold'>Company Name</Form.Label>
-                    {editMode ? (
-                        <Form.Control
-                            type='text'
-                            placeholder='Enter company name'
-                            value={companyName}
-                            onChange={(e) => this.updateCompany(companies, companyIndex, 'companyName', e.target.value)}
+            <Form.Group controlId='formBasicTasks'>
+                <Form.Label className='font-weight-bold'>
+                    Main Tasks of Job{' '}
+                    {editMode && (
+                        <FontAwesomeIcon
+                            icon={faPlusCircle}
+                            style={{ cursor: 'pointer' }}
+                            onMouseDown={() => modifyCompanies({ type: 'addTask', companyIndex })}
                         />
-                    ) : (
-                        <p>{companyName}</p>
                     )}
-                </Form.Group>
+                </Form.Label>
 
-                <Form.Group controlId='formBasicPositionTitle'>
-                    <Form.Label className='font-weight-bold'>Position Title</Form.Label>
+                {!editMode ? (
+                    <ul>
+                        {jobTasks.map((task, index) => (
+                            <li key={index} style={{ marginLeft: '1.25em' }}>
+                                <div style={{ position: 'relative' }}>
+                                    <p>{task}</p>
+                                    {jobTasks.length > 1 && (
+                                        // Render delete button only if there's more than 1 task
+                                        <FontAwesomeIcon
+                                            icon={faMinusCircle}
+                                            style={minusCircleStyle}
+                                            onMouseDown={() =>
+                                                modifyCompanies({ type: 'removeTask', companyIndex, jobIndex: index })
+                                            }
+                                        />
+                                    )}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    jobTasks.map((task, index) => (
+                        <div key={index} style={{ position: 'relative' }}>
+                            <Form.Control
+                                type='text'
+                                placeholder='Enter task'
+                                className='mt-2'
+                                value={task}
+                                onChange={(e) =>
+                                    modifyCompanies({
+                                        type: 'editTask',
+                                        companyIndex,
+                                        jobIndex: index,
+                                        value: e.target.value,
+                                    })
+                                }
+                            />
+
+                            {jobTasks.length > 1 && (
+                                // Render delete button only if there's more than 1 task
+                                <FontAwesomeIcon
+                                    icon={faMinusCircle}
+                                    style={minusCircleStyle}
+                                    onMouseDown={() =>
+                                        modifyCompanies({ type: 'removeTask', companyIndex, jobIndex: index })
+                                    }
+                                />
+                            )}
+                        </div>
+                    ))
+                )}
+            </Form.Group>
+
+            <Form.Row className='justify-content-between w-100 mr-0 ml-0'>
+                <Form.Group controlId='formBasicDate'>
+                    <Form.Label className='font-weight-bold'>Date of Employment</Form.Label>
                     {editMode ? (
                         <Form.Control
-                            type='text'
-                            placeholder='Enter title'
-                            value={positionTitle}
+                            type='date'
+                            value={dateFrom}
+                            name='dateFrom'
                             onChange={(e) =>
-                                this.updateCompany(companies, companyIndex, 'positionTitle', e.target.value)
+                                modifyCompanies({
+                                    type: 'editCompany',
+                                    companyIndex,
+                                    name: e.target.name,
+                                    value: e.target.value,
+                                })
                             }
                         />
                     ) : (
-                        <p>{positionTitle}</p>
+                        <p>{dateFrom}</p>
                     )}
                 </Form.Group>
 
-                <Form.Group controlId='formBasicTasks'>
-                    <Form.Label className='font-weight-bold'>
-                        Main Tasks of Job{' '}
-                        {editMode && (
-                            <FontAwesomeIcon
-                                icon={faPlusCircle}
-                                style={{ cursor: 'pointer' }}
-                                onMouseDown={() => this.modifyTask(companies, companyIndex, 'add')}
-                            />
-                        )}
-                    </Form.Label>
-                    {!editMode ? (
-                        <ul>
-                            {jobTasks.map((task, index) => (
-                                <li key={index} style={{ marginLeft: '1.25em' }}>
-                                    <div style={{ position: 'relative' }}>
-                                        <p>{task}</p>
-                                        {jobTasks.length > 1 && (
-                                            // Render delete button only if there's more than 1 task
-                                            <FontAwesomeIcon
-                                                icon={faMinusCircle}
-                                                style={minusCircleStyle}
-                                                onMouseDown={() =>
-                                                    this.modifyTask(companies, companyIndex, 'remove', index)
-                                                }
-                                            />
-                                        )}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+                <Form.Group controlId='formBasicDate2'>
+                    <Form.Label className='font-weight-bold'>To</Form.Label>
+
+                    {editMode ? (
+                        <Form.Control
+                            type='date'
+                            value={dateTo}
+                            name='dateTo'
+                            onChange={(e) =>
+                                modifyCompanies({
+                                    type: 'editCompany',
+                                    companyIndex,
+                                    name: e.target.name,
+                                    value: e.target.value,
+                                })
+                            }
+                        />
                     ) : (
-                        jobTasks.map((task, index) => (
-                            <div key={index} style={{ position: 'relative' }}>
-                                <Form.Control
-                                    type='text'
-                                    placeholder='Enter task'
-                                    className='mt-2'
-                                    value={task}
-                                    onChange={(e) =>
-                                        this.updateCompanyTasks(companies, companyIndex, index, e.target.value)
-                                    }
-                                />
-
-                                {jobTasks.length > 1 && (
-                                    // Render delete button only if there's more than 1 task
-                                    <FontAwesomeIcon
-                                        icon={faMinusCircle}
-                                        style={minusCircleStyle}
-                                        onMouseDown={() => this.modifyTask(companies, companyIndex, 'remove', index)}
-                                    />
-                                )}
-                            </div>
-                        ))
+                        <p>{dateTo}</p>
                     )}
                 </Form.Group>
+            </Form.Row>
 
-                <Form.Row className='justify-content-between w-100 mr-0 ml-0'>
-                    <Form.Group controlId='formBasicDate'>
-                        <Form.Label className='font-weight-bold'>Date of Employment</Form.Label>
-                        {editMode ? (
-                            <Form.Control
-                                type='date'
-                                value={dateFrom}
-                                onChange={(e) =>
-                                    this.updateCompany(companies, companyIndex, 'dateFrom', e.target.value)
-                                }
-                            />
-                        ) : (
-                            <p>{dateFrom}</p>
-                        )}
-                    </Form.Group>
-                    <Form.Group controlId='formBasicDate2'>
-                        <Form.Label className='font-weight-bold'>To</Form.Label>
+            <Form.Row className='justify-content-between w-100 mr-0 ml-0'>
+                <Button variant={editMode ? 'info' : 'secondary'} onMouseDown={() => setEditMode(!editMode)}>
+                    {editMode ? 'Submit' : 'Edit'}
+                </Button>
 
-                        {editMode ? (
-                            <Form.Control
-                                type='date'
-                                value={dateTo}
-                                onChange={(e) => this.updateCompany(companies, companyIndex, 'dateTo', e.target.value)}
-                            />
-                        ) : (
-                            <p>{dateTo}</p>
-                        )}
-                    </Form.Group>
-                </Form.Row>
-                <Form.Row className='justify-content-between w-100 mr-0 ml-0'>
-                    <Button variant={editMode ? 'info' : 'secondary'} onMouseDown={() => this.toggleEditMode()}>
-                        {editMode ? 'Submit' : 'Edit'}
+                {numberOfCompanies > 1 && (
+                    <Button
+                        variant='danger'
+                        onMouseDown={() => modifyCompanies({ type: 'removeCompany', companyIndex })}
+                    >
+                        Delete
                     </Button>
-                    {companies.length > 1 && (
-                        <Button variant='danger' onMouseDown={() => modifyCompany(companies, 'remove', companyIndex)}>
-                            Delete
-                        </Button>
-                    )}
-                </Form.Row>
-            </Form>
-        );
-    }
-}
+                )}
+            </Form.Row>
+        </Form>
+    );
+};
 
 export default ExperienceForm;
